@@ -1,0 +1,9 @@
+YASS - Yet Another Sudoku Solver
+---
+
+Author: kne1p
+
+* First Version runs for 5-100ms depending on the problem on a Core2Duo @2.5 Ghz
+* Further Optimizations possible, but improvements below 50ms are hard to measure
+
+  
