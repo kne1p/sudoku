@@ -3,8 +3,12 @@ package sudoku;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Queue;
+
+import sudoku.SudokuSolver.Guess;
 
 /**
  * performance probleme?: jede rekursion erzeugt 4*9*9 kopierschritte -
@@ -24,13 +28,26 @@ public class SudokuSolver {
 
 	static class Guess {
 		int x, y, val;
+		
 		SudokuField backup;
+		int freeSpotsCell;
 
-		public Guess(int x, int y, int val, SudokuField field) {
+		public Guess(int x, int y, int val) {
 			this.x = x;
 			this.y = y;
 			this.val = val;
-			this.backup = field;
+		}
+	}
+	
+	static class GuessQueueComparator implements Comparator<Queue<Guess>> {
+		@Override
+		public int compare(Queue<Guess> q1, Queue<Guess> q2) {
+			Guess g1 = q1.peek();
+			Guess g2 = q2.peek();
+			if (g1.freeSpotsCell < g2.freeSpotsCell) {
+				return -1;
+			}
+			return (g1.freeSpotsCell == g2.freeSpotsCell) ? 0 : 1;
 		}
 	}
 
@@ -57,7 +74,32 @@ public class SudokuSolver {
 		System.out.println("Starting field:");
 		System.out.println(this);
 		
-		System.out.println(solve(0, 0, 1)); // x 0, y 0, val 1
+		//TODO: freespots, copy field
+		PriorityQueue<Queue<Guess>> candidates = new PriorityQueue<>(f.remaining, new GuessQueueComparator());
+		Queue<Guess> spotCandidates = new LinkedList<>();
+		for (int x = 0; x < 9; x++) {
+			for (int y = 0; y < 9; y++) {
+				if (f.getVal(x, y) == 0) {
+					// Field backup;
+					for (int val = 1; val <= 9; val++) {
+						boolean free = f.check(x, y, val);
+						if (!free)
+							continue;
+						Guess guess = new Guess(x, y, val);
+						spotCandidates.add(guess);
+					}
+					int num = spotCandidates.size();
+					Guess guess = spotCandidates.peek(); //could only be null for invalid fields
+					guess.freeSpotsCell = num;
+//					for (Guess guess : spotCandidates) {
+//						guess.freeSpotsCell = num;
+//					}
+					candidates.add(spotCandidates);
+				}
+			}
+		}
+		
+		System.out.println(solve(0)); // first 
 		
 		System.out.println("recursions: " + recursions);
 		System.out.println("fieldCopies: " + fieldCopies);
@@ -86,7 +128,7 @@ public class SudokuSolver {
 		// TODO recursively iterate all possible values for non-solved spots
 		// eleminate all invalid candidates for each free spot first
 		// remember all choices to enable backtracking (stack?)
-		Queue<Guess> candidates = new LinkedList<>();
+		Queue<Guess> spotCandidates = new LinkedList<>();
 
 		int x, y, val;
 		for (x = startX; x < 9; x++) {
@@ -100,19 +142,19 @@ public class SudokuSolver {
 						if (!free)
 							continue;
 						Guess guess = new Guess(x, y, val, new SudokuField(f));
-						candidates.add(guess);
+						spotCandidates.add(guess);
 					}
-					if (candidates.size() == 1) {
-						Guess guess = candidates.remove();
+					if (spotCandidates.size() == 1) {
+						Guess guess = spotCandidates.remove();
 						f.set(guess.x, guess.y, guess.val);
-						candidates.clear();
-					} else if (candidates.size() == 0) {
+						spotCandidates.clear();
+					} else if (spotCandidates.size() == 0) {
 						// FEHLER; aufräumen
 						return false;
 					} else {
 						// candidates einzeln abarbeiten
-						for (int i = candidates.size() - 1; i >= 0; i--) {
-							Guess guess = candidates.remove();
+						for (int i = spotCandidates.size() - 1; i >= 0; i--) {
+							Guess guess = spotCandidates.remove();
 							f.set(guess.x, guess.y, guess.val);
 							boolean result = solve(guess.x, guess.y, guess.val);
 							if (result) {
@@ -130,7 +172,7 @@ public class SudokuSolver {
 								}
 							}
 						}
-						candidates.clear();
+						spotCandidates.clear();
 					}
 				}
 			}
