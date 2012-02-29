@@ -70,6 +70,15 @@ public class SudokuSolver {
 	 * kandidaten, je nachdem ob mehr oder weniger als threashold je spot (zB 3)
 	 * ==> priority queue
 	 * 
+	 * TODO: delay field copy (more than 300 element copies)
+	 * TODO: use priority queue, sort "candidatesOfASpot" using candidates.size
+	 * TODO: use tuning parameter: every N steps, clear candidate List and find candidates again, to update candidate count?
+	 * 	would be more efficient to directly eliminate non-candidates
+	 *  priority queue may be unnecessary, simple step over any spots with "too many" candidates, 
+	 *  	loop until all spots set
+	 *  	remember first spot with minimal candidate count, start again there using that value as threshold
+	 *  	==> more checks per recursion, less copies  
+	 * 
 	 * @return
 	 */
 	private boolean solve(int startX, int startY, int startVal) {
@@ -77,7 +86,6 @@ public class SudokuSolver {
 		// TODO recursively iterate all possible values for non-solved spots
 		// eleminate all invalid candidates for each free spot first
 		// remember all choices to enable backtracking (stack?)
-		// Deque<Guess> choices = new LinkedList<>();
 		Queue<Guess> candidates = new LinkedList<>();
 
 		int x, y, val;
