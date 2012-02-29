@@ -3,6 +3,7 @@ package sudoku;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
@@ -21,6 +22,7 @@ public class SudokuSolver {
 	static long fieldCopies = 0;
 
 	SudokuField f = new SudokuField();
+	ArrayList<Queue<Guess>> candidates;
 	
 	String fileName;
 
@@ -74,17 +76,17 @@ public class SudokuSolver {
 		System.out.println("Starting field:");
 		System.out.println(this);
 		
-		//TODO: freespots, copy field
-		PriorityQueue<Queue<Guess>> candidates = new PriorityQueue<>(f.remaining, new GuessQueueComparator());
-		Queue<Guess> spotCandidates = new LinkedList<>();
+		//TODO: copy field
+		PriorityQueue<Queue<Guess>> sortedCandidates = new PriorityQueue<>(f.remaining, new GuessQueueComparator());
+		candidates = new ArrayList<>(f.remaining);
 		for (int x = 0; x < 9; x++) {
 			for (int y = 0; y < 9; y++) {
 				if (f.getVal(x, y) == 0) {
 					// Field backup;
+					Queue<Guess> spotCandidates = new LinkedList<>();
 					for (int val = 1; val <= 9; val++) {
-						boolean free = f.check(x, y, val);
-						if (!free)
-							continue;
+						if (!f.check(x, y, val))
+							continue;	//spot taken?
 						Guess guess = new Guess(x, y, val);
 						spotCandidates.add(guess);
 					}
@@ -94,11 +96,13 @@ public class SudokuSolver {
 //					for (Guess guess : spotCandidates) {
 //						guess.freeSpotsCell = num;
 //					}
-					candidates.add(spotCandidates);
+					sortedCandidates.add(spotCandidates);
 				}
 			}
 		}
-		
+		candidates.addAll(sortedCandidates);
+		System.out.println(sortedCandidates.size());
+		System.out.println(candidates.size());
 		System.out.println(solve(0)); // first 
 		
 		System.out.println("recursions: " + recursions);
@@ -123,58 +127,50 @@ public class SudokuSolver {
 	 * 
 	 * @return
 	 */
-	private boolean solve(int startX, int startY, int startVal) {
+	private boolean solve(int startIndex) {
 		recursions++;
 		// TODO recursively iterate all possible values for non-solved spots
 		// eleminate all invalid candidates for each free spot first
 		// remember all choices to enable backtracking (stack?)
-		Queue<Guess> spotCandidates = new LinkedList<>();
 
 		int x, y, val;
-		for (x = startX; x < 9; x++) {
-			y = (x == startX) ? startY : 0;
-			for (; y < 9; y++) {
-				if (f.getVal(x, y) == 0) {
-					// Field backup;
-					val = (x == startX && y == startY) ? startVal : 1;
-					for (; val <= 9; val++) {
-						boolean free = f.check(x, y, val);
-						if (!free)
-							continue;
-						Guess guess = new Guess(x, y, val, new SudokuField(f));
-						spotCandidates.add(guess);
+		for (int index = startIndex; index < candidates.size(); index++) {
+			Queue<Guess> spotCandidates = candidates.get(index);
+			
+			if (spotCandidates.size() == 1) {
+				Guess guess = spotCandidates.remove();
+				f.set(guess.x, guess.y, guess.val);
+				spotCandidates.clear();
+			} else if (spotCandidates.size() == 0) {
+				// FEHLER; aufräumen
+				return false;
+			} else {
+				// candidates einzeln abarbeiten
+				for (int i = spotCandidates.size() - 1; i >= 0; i--) {
+					Guess guess = spotCandidates.remove();
+					if (f.getVal(guess.x, guess.y) != 0) {
+						System.out.println("spot already filled");
+						break; //should not happen
 					}
-					if (spotCandidates.size() == 1) {
-						Guess guess = spotCandidates.remove();
-						f.set(guess.x, guess.y, guess.val);
-						spotCandidates.clear();
-					} else if (spotCandidates.size() == 0) {
-						// FEHLER; aufräumen
-						return false;
+					guess.backup = new SudokuField(f);
+					f.set(guess.x, guess.y, guess.val);
+					boolean result = solve(index+1);
+					if (result) {
+						// wenn true, dann haben wir eine lösung
+						return true;
 					} else {
-						// candidates einzeln abarbeiten
-						for (int i = spotCandidates.size() - 1; i >= 0; i--) {
-							Guess guess = spotCandidates.remove();
-							f.set(guess.x, guess.y, guess.val);
-							boolean result = solve(guess.x, guess.y, guess.val);
-							if (result) {
-								// wenn true, dann haben wir eine lösung
-								return true;
-							} else {
-								// FEHLER;
-								f = guess.backup;
-								if (i == 0) {
-									// alle candidaten führen nicht zur lösung
-									return false;
-								} else {
-									// versuche nächsten kandidaten
-									continue;
-								}
-							}
+						// FEHLER;
+						f = guess.backup;
+						if (i == 0) {
+							// alle candidaten führen nicht zur lösung
+							return false;
+						} else {
+							// versuche nächsten kandidaten
+							continue;
 						}
-						spotCandidates.clear();
 					}
 				}
+				spotCandidates.clear();
 			}
 		}
 
