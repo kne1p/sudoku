@@ -7,8 +7,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * TODO: 
- * performance probleme: jede rekursion erzeugt 4*9*9 kopierschritte -
+ * performance probleme?: jede rekursion erzeugt 4*9*9 kopierschritte -
  * sollte jew. im cache liegen?
  * 
  * @author Chris
@@ -103,13 +102,13 @@ public class SudokuSolver {
 						// FEHLER; aufräumen
 						return false;
 					} else {
-						// TODO: candidates einzeln abarbeiten
+						// candidates einzeln abarbeiten
 						for (int i = candidates.size() - 1; i >= 0; i--) {
 							Guess guess = candidates.remove();
 							f.set(guess.x, guess.y, guess.val);
 							boolean result = solve(guess.x, guess.y, guess.val);
 							if (result) {
-								// TODO wenn true, dann haben wir eine lösung
+								// wenn true, dann haben wir eine lösung
 								return true;
 							} else {
 								// FEHLER;
