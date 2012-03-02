@@ -6,12 +6,16 @@ public class SudokuField {
 
 	int remaining;
 
+	int[][] xNeighbors = new int[9][10]; //TODO: eliminate neighbor[i][0]? 
+	int[][] yNeighbors = new int[9][10];
+	int[][] sqNeighbors = new int[9][10];
+
 	public SudokuField() {
-		// for (int i = 0; i < 9; i++) {
-		// xNeighbors[i][0] = 9; // 9 spots frei
-		// yNeighbors[i][0] = 9; // 9 spots frei
-		// sqNeighbors[i][0] = 9; // 9 spots frei
-		// }
+		for (int i = 0; i < 9; i++) {
+			xNeighbors[i][0] = 9; // 9 spots frei
+			yNeighbors[i][0] = 9; // 9 spots frei
+			sqNeighbors[i][0] = 9; // 9 spots frei
+		}
 		remaining = 81;
 	}
 
@@ -25,7 +29,7 @@ public class SudokuField {
 		}
 		remaining = old.remaining;
 		for (int i = 0; i < 9; i++) {
-			for (int j = 1; j < 10; j++) {
+			for (int j = 0; j < 10; j++) {
 				xNeighbors[i][j] = old.xNeighbors[i][j];
 				yNeighbors[i][j] = old.yNeighbors[i][j];
 				sqNeighbors[i][j] = old.sqNeighbors[i][j];
@@ -44,7 +48,24 @@ public class SudokuField {
 	 */
 	public int getVal(int x, int y) {
 		// return f[x][y] & (0xF);
+//		return (f[x][y] < 0) ? 0 : f[x][y];
 		return f[x][y];
+	}
+
+	public int getCandCount(int x, int y) {
+//		int sq_id = getSquareId(x, y);
+//		return (xNeighbors[x][0] < yNeighbors[y][0]) ? 
+//				((xNeighbors[x][0] < sqNeighbors[sq_id][0]) ? 
+//						xNeighbors[x][0] : sqNeighbors[sq_id][0]) : 
+//					((yNeighbors[y][0] < sqNeighbors[sq_id][0]) ? 
+//						yNeighbors[y][0] : sqNeighbors[sq_id][0]);
+		int count = 0;
+		for (int val = 1; val <= 9; val++) {
+			if (check(x, y, val)) {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	/**
@@ -52,6 +73,9 @@ public class SudokuField {
 	 * je nach erfolg
 	 */
 	public void set(int x, int y, int val) {
+		if (val == 0) {
+			throw new IllegalArgumentException();
+		}
 		f[x][y] = val;
 		xNeighbors[x][val] = 1;
 		yNeighbors[y][val] = 1;
@@ -59,10 +83,13 @@ public class SudokuField {
 		sqNeighbors[sq_id][val] = 1;
 
 		// update free spots
-		// xNeighbors[x][0]--;
-		// yNeighbors[y][0]--;
-		// sqNeighbors[sq_id][0]--;
+		xNeighbors[x][0]--;
+		yNeighbors[y][0]--;
+		sqNeighbors[sq_id][0]--;
 		remaining--;
+		if (xNeighbors[x][0] < 0 || yNeighbors[y][0] < 0 || sqNeighbors[sq_id][0] < 0 || remaining < 0) {
+			throw new IllegalStateException("ERROR: negative free spots");
+		}
 	}
 
 	/**
@@ -73,11 +100,6 @@ public class SudokuField {
 
 		return (xNeighbors[x][val] + yNeighbors[y][val] + sqNeighbors[sq_id][val]) == 0;
 	}
-
-	int[][] xNeighbors = new int[9][10];
-	int[][] yNeighbors = new int[9][10];
-	int[][] sqNeighbors = new int[9][10];
-
 
 	private int getSquareId(int x, int y) {
 		// sq_id = 3*x_id + y_id, x_id = x/3, y_id = y/3
