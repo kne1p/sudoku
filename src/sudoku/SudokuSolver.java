@@ -24,13 +24,11 @@ public class SudokuSolver {
 
 	static class Guess {
 		int x, y, val;
-		SudokuField backup;
 
-		public Guess(int x, int y, int val, SudokuField field) {
+		public Guess(int x, int y, int val) {
 			this.x = x;
 			this.y = y;
 			this.val = val;
-			this.backup = field;
 		}
 	}
 
@@ -93,13 +91,12 @@ public class SudokuSolver {
 			y = (x == startX) ? startY : 0;
 			for (; y < 9; y++) {
 				if (f.getVal(x, y) == 0) {
-					// Field backup;
 					val = (x == startX && y == startY) ? startVal : 1;
 					for (; val <= 9; val++) {
 						boolean free = f.check(x, y, val);
 						if (!free)
 							continue;
-						Guess guess = new Guess(x, y, val, new SudokuField(f));
+						Guess guess = new Guess(x, y, val);
 						candidates.add(guess);
 					}
 					if (candidates.size() == 1) {
@@ -113,6 +110,8 @@ public class SudokuSolver {
 						// candidates einzeln abarbeiten
 						for (int i = candidates.size() - 1; i >= 0; i--) {
 							Guess guess = candidates.remove();
+							// Field backup: every recursion level has at most one backup
+							SudokuField backup = new SudokuField(f);
 							f.set(guess.x, guess.y, guess.val);
 							boolean result = solve(guess.x, guess.y, guess.val);
 							if (result) {
@@ -120,7 +119,7 @@ public class SudokuSolver {
 								return true;
 							} else {
 								// FEHLER;
-								f = guess.backup;
+								f = backup;
 								if (i == 0) {
 									// alle candidaten führen nicht zur lösung
 									return false;
