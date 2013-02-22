@@ -4,11 +4,13 @@ public class SudokuField {
 
 	private int[][] f = new int[9][9];
 
-	int remaining;
+	public int remaining;
 
 	int[][] xNeighbors = new int[9][10]; //TODO: eliminate neighbor[i][0]? 
 	int[][] yNeighbors = new int[9][10];
 	int[][] sqNeighbors = new int[9][10];
+
+	static int fieldCopies = 0;
 
 	public SudokuField() {
 		for (int i = 0; i < 9; i++) {
@@ -21,7 +23,7 @@ public class SudokuField {
 
 	// copy constructor
 	public SudokuField(SudokuField old) {
-		SudokuSolver.fieldCopies++;
+		SudokuField.fieldCopies++;
 		for (int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
 				f[i][j] = old.f[i][j];
@@ -52,30 +54,37 @@ public class SudokuField {
 		return f[x][y];
 	}
 
-	public int getCandCount(int x, int y) {
+	public Candidates getCandidates(int x, int y) {
+		Candidates c = new Candidates();
 //		int sq_id = getSquareId(x, y);
 //		return (xNeighbors[x][0] < yNeighbors[y][0]) ? 
 //				((xNeighbors[x][0] < sqNeighbors[sq_id][0]) ? 
 //						xNeighbors[x][0] : sqNeighbors[sq_id][0]) : 
 //					((yNeighbors[y][0] < sqNeighbors[sq_id][0]) ? 
 //						yNeighbors[y][0] : sqNeighbors[sq_id][0]);
-		int count = 0;
 		for (int val = 1; val <= 9; val++) {
 			if (check(x, y, val)) {
-				count++;
+				c.set(val);
 			}
 		}
-		return count;
+		return c;
 	}
 
 	/**
-	 * IDEE: lasse set auch prüfen, ob noch platz frei - gebe true/false zurück
+	 * TODO: lasse set auch prüfen, ob noch platz frei - gebe true/false zurück
 	 * je nach erfolg
 	 */
 	public void set(int x, int y, int val) {
 		if (val == 0) {
 			throw new IllegalArgumentException();
 		}
+		if (f[x][y] != 0) {
+			throw new IllegalArgumentException();
+		}
+		if (!this.check(x,y,val)) {
+			throw new IllegalArgumentException();
+		}
+		
 		f[x][y] = val;
 		xNeighbors[x][val] = 1;
 		yNeighbors[y][val] = 1;
@@ -102,9 +111,20 @@ public class SudokuField {
 	}
 
 	private int getSquareId(int x, int y) {
-		// sq_id = 3*x_id + y_id, x_id = x/3, y_id = y/3
 		int x_id = x / 3;
 		int y_id = y / 3;
 		return 3 * x_id + y_id;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
+				sb.append(getVal(i, j));
+			}
+			sb.append('\n');
+		}
+		return sb.toString();
 	}
 }
