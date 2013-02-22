@@ -15,7 +15,8 @@ import java.util.PriorityQueue;
  * @author Chris
  */
 public class SudokuSolver {
-	int recursions = 0;
+	public int fieldCopies = 0;
+	public int recursions = 0;
 	public SudokuField f = new SudokuField();
 	ArrayList<Spot> openSpots;
 
@@ -73,14 +74,11 @@ public class SudokuSolver {
 			while ((s = sortedOpenSpots.poll()) != null) {
 				openSpots.add(s);
 			}
-	
-			System.out.println("open spots: " + sortedOpenSpots.size() + ", "
-					+ openSpots.size());
 		}
 		System.out.println("solution found: " +solve(0)); // start on first openSpot
 
 		System.out.println("recursions: " + recursions);
-		System.out.println("fieldCopies: " + SudokuField.fieldCopies);
+		System.out.println("fieldCopies: " + fieldCopies);
 		System.out.println(this);
 	}
 
@@ -161,21 +159,20 @@ public class SudokuSolver {
 							continue; // eliminates too much??
 						}
 						
-						SudokuField backup = new SudokuField(f);
+						SudokuField backup = new SudokuField(f, this);
 						f.set(spot.x, spot.y, guess);
 
 						if (solve(index + 1)) {
-							// wenn true, dann haben wir eine lösung
+							//  true => solution found
 							return true;
 						} else {
-							// FEHLER;
 							f = backup;
 						}
 
-						// versuche nächsten kandidaten
+						// try next candidate
 					}
 
-					// alle candidaten führen nicht zur lösung
+					// no candidate is solution
 					return false;
 				}
 			}

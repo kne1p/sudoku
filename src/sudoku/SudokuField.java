@@ -10,8 +10,6 @@ public class SudokuField {
 	int[][] yNeighbors = new int[9][10];
 	int[][] sqNeighbors = new int[9][10];
 
-	static int fieldCopies = 0;
-
 	public SudokuField() {
 		for (int i = 0; i < 9; i++) {
 			xNeighbors[i][0] = 9; // 9 spots frei
@@ -22,8 +20,8 @@ public class SudokuField {
 	}
 
 	// copy constructor
-	public SudokuField(SudokuField old) {
-		SudokuField.fieldCopies++;
+	public SudokuField(SudokuField old, SudokuSolver s) {
+		s.fieldCopies++;
 		for (int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
 				f[i][j] = old.f[i][j];

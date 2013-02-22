@@ -108,7 +108,7 @@ public class SudokuSolverTest {
 
 	@Test
 	public void testToString() {
-		assertEquals(s.f.toString(), (new SudokuField(s.f).toString()));
+		assertEquals(s.f.toString(), (new SudokuField(s.f, s).toString()));
 	}
 
 	@Test
